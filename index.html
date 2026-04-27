@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FairLend - Unbiased AI Loan Approvals</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Chart.js for XAI Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <span class="icon">✨</span>
+            <h1>FairLend</h1>
+        </div>
+        <div class="nav-links">
+            <button id="btn-apply" class="active">Apply for Loan</button>
+            <button id="btn-dashboard">Admin Dashboard</button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Application View -->
+        <section id="view-apply" class="view active">
+            <div class="header-text">
+                <h2>Equitable Loan Application</h2>
+                <p>Our AI evaluates your application solely on financial behavior. No demographic data required.</p>
+            </div>
+            
+            <form id="loan-form" class="glass-panel">
+                <div class="form-group">
+                    <label for="income">Annual Income ($)</label>
+                    <input type="number" id="income" required placeholder="e.g. 65000">
+                </div>
+                <div class="form-group">
+                    <label for="amount">Requested Loan Amount ($)</label>
+                    <input type="number" id="amount" required placeholder="e.g. 15000">
+                </div>
+                <div class="form-group">
+                    <label for="dti">Debt-to-Income Ratio (%)</label>
+                    <input type="number" id="dti" required placeholder="e.g. 25">
+                </div>
+                
+                <!-- NEW: Alternative Data Feature -->
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="alt-data-toggle">
+                    <label for="alt-data-toggle">I have a limited credit history (Use Alternative Data)</label>
+                </div>
+
+                <div id="traditional-credit" class="form-group">
+                    <label for="credit">Credit Score</label>
+                    <input type="number" id="credit" required placeholder="e.g. 720" min="300" max="850">
+                </div>
+
+                <div id="alternative-credit" class="hidden">
+                    <div class="form-group">
+                        <label for="rent-history">Consecutive On-time Rent Payments (Months)</label>
+                        <input type="number" id="rent-history" placeholder="e.g. 24" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="utility-history">Consecutive On-time Utility Payments (Months)</label>
+                        <input type="number" id="utility-history" placeholder="e.g. 36" min="0">
+                    </div>
+                </div>
+
+                <button type="submit" class="primary-btn">Analyze Application</button>
+            </form>
+
+            <div id="result-panel" class="glass-panel hidden">
+                <div class="processing hidden" id="processing">
+                    <div class="spinner"></div>
+                    <p>AI is analyzing financial behavior...</p>
+                </div>
+                <div class="result-content hidden" id="result-content">
+                    <h3 id="decision-title">Loan Approved</h3>
+                    <div class="metrics">
+                        <div class="metric-box">
+                            <span class="metric-label">Fairness Confidence</span>
+                            <span class="metric-value highlight" id="fairness-score">98.5%</span>
+                        </div>
+                    </div>
+                    <div class="xai-box">
+                        <h4>AI Decision Explainability (XAI)</h4>
+                        <p id="xai-text">Decision driven by strong credit score and low DTI. Demographic factors were excluded from this analysis.</p>
+                        
+                        <!-- NEW CHART CONTAINER -->
+                        <div class="chart-container" style="position: relative; height:250px; width:100%; margin: 1.5rem 0;">
+                            <canvas id="xai-chart"></canvas>
+                        </div>
+                        
+                        <div class="xai-bars" id="xai-bars">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="secondary-btn" id="btn-new-app">New Application</button>
+                        <!-- NEW: Human in the loop Appeal button -->
+                        <button class="appeal-btn hidden" id="btn-appeal">Request Human Review</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view hidden">
+            <div class="header-text">
+                <h2>Bias Detection Dashboard</h2>
+                <p>Real-time monitoring of model fairness and AI decision-making.</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="glass-panel stat-card">
+                    <h3>Demographic Parity</h3>
+                    <div class="stat-value text-green" id="dash-parity">0.98</div>
+                    <p class="stat-desc">Target: > 0.80</p>
+                </div>
+                <div class="glass-panel stat-card">
+                    <h3>Equal Opportunity</h3>
+                    <div class="stat-value text-green" id="dash-opportunity">0.95</div>
+                    <p class="stat-desc">Target: > 0.80</p>
+                </div>
+                <div class="glass-panel stat-card">
+                    <h3>Pending Appeals (HITL)</h3>
+                    <div class="stat-value" id="dash-appeals">2</div>
+                    <p class="stat-desc">Requires human review</p>
+                </div>
+            </div>
+
+            <div class="glass-panel table-container">
+                <div class="table-header">
+                    <h3>Recent AI Decisions</h3>
+                    <div class="table-filters">
+                        <span class="badge" style="background: rgba(255,255,255,0.1)">All</span>
+                        <span class="badge appeal">Appeals</span>
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>App ID</th>
+                            <th>Outcome</th>
+                            <th>Fairness Score</th>
+                            <th>Primary Factor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-table-body">
+                        <!-- Mock data injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>

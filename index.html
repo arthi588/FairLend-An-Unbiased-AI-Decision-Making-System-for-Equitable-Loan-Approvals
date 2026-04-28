@@ -1,159 +1,980 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FairLend - Unbiased AI Loan Approvals</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Chart.js for XAI Visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FairLend — Unbiased AI Loan Approvals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0b0f;
+    --surface: #12141a;
+    --surface2: #1a1d26;
+    --border: rgba(255,255,255,0.07);
+    --border-bright: rgba(255,255,255,0.14);
+    --accent: #4f8ef7;
+    --accent2: #7c5cfc;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --text: #f0f2f8;
+    --muted: #6b7280;
+    --muted2: #9ca3af;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background glow blobs */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(79,142,247,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,92,252,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    height: 64px;
+    background: rgba(10,11,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .nav-tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .nav-tab {
+    padding: 7px 18px;
+    border: none; background: transparent;
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-tab.active {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border-bright);
+  }
+  .nav-tab:not(.active):hover { color: var(--muted2); }
+
+  /* LAYOUT */
+  main {
+    position: relative; z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 2.5rem; }
+  .page-header h2 {
+    font-family: var(--font-head);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 0.6rem;
+    background: linear-gradient(135deg, #f0f2f8, #8fa3c8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .page-header p {
+    color: var(--muted2);
+    font-size: 14.5px;
+    max-width: 480px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .badge-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(34,197,94,0.12);
+    color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.2);
+    font-size: 11px; font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 4px;
+  }
+  .badge-pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* GLASS PANEL */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  /* FORM */
+  .form-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 560px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full-width { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--muted2);
+  }
+
+  input[type="number"], input[type="text"] {
+    background: var(--surface2);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    padding: 11px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
+  }
+  input::placeholder { color: var(--muted); }
+
+  /* Toggle switch */
+  .toggle-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-row input[type="checkbox"] { display: none; }
+  .toggle-switch {
+    position: relative;
+    width: 38px; height: 22px;
+    background: var(--border-bright);
+    border-radius: 11px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle-row.checked .toggle-switch { background: var(--accent); }
+  .toggle-row.checked .toggle-switch::after { transform: translateX(16px); }
+  .toggle-label { font-size: 13.5px; color: var(--muted2); }
+  .toggle-label strong { color: var(--text); font-weight: 500; }
+
+  .alt-fields { display: none; margin-top: 1rem; }
+  .alt-fields.visible { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 560px) {
+    .alt-fields.visible { grid-template-columns: 1fr; }
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  /* PRIMARY BUTTON */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    letter-spacing: 0.02em;
+    margin-top: 0.5rem;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.99); }
+
+  .btn-secondary {
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--muted2);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+
+  .btn-appeal {
+    padding: 10px 20px;
+    background: rgba(239,68,68,0.1);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-appeal:hover { background: rgba(239,68,68,0.18); }
+
+  /* RESULT PANEL */
+  .result-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .decision-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .decision-badge.approved {
+    background: rgba(34,197,94,0.12);
+    color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.22);
+  }
+  .decision-badge.denied {
+    background: rgba(239,68,68,0.1);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.22);
+  }
+  .decision-icon { font-size: 1.1rem; }
+
+  .fairness-ring {
+    text-align: center;
+  }
+  .fairness-ring .score {
+    font-family: var(--font-head);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .fairness-ring .score-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  /* XAI SECTION */
+  .xai-section { margin-top: 1.5rem; }
+  .xai-section h4 {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .xai-reason {
+    font-size: 14px;
+    color: var(--muted2);
+    margin-bottom: 1.2rem;
+    line-height: 1.7;
+  }
+
+  .factor-bar { margin-bottom: 10px; }
+  .factor-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 12.5px;
+  }
+  .factor-name { color: var(--muted2); }
+  .factor-val { color: var(--text); font-weight: 500; font-size: 12px; }
+  .bar-track {
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 200px;
+    margin: 1.2rem 0;
+  }
+
+  .action-row {
+    display: flex; gap: 10px;
+    margin-top: 1.5rem;
+  }
+
+  /* SPINNER */
+  .spinner-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1rem; padding: 2rem 0;
+    color: var(--muted2);
+    font-size: 13.5px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2.5px solid var(--border-bright);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+
+  /* DASHBOARD */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 600px) {
+    .stat-grid { grid-template-columns: 1fr; }
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.5rem;
+    position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+  .stat-card h3 {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .stat-val {
+    font-family: var(--font-head);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+  .stat-card p { font-size: 11.5px; color: var(--muted); }
+  .text-green { color: var(--success); }
+  .text-blue { color: var(--accent); }
+  .text-yellow { color: var(--warning); }
+
+  /* TABLE */
+  .table-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .table-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-head h3 {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .filter-badges { display: flex; gap: 6px; }
+  .fbadge {
+    font-size: 11.5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border-bright);
+    color: var(--muted2);
+    cursor: pointer;
+  }
+  .fbadge.active { background: rgba(79,142,247,0.15); color: var(--accent); border-color: rgba(79,142,247,0.3); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody td {
+    padding: 12px 16px;
+    color: var(--muted2);
+    vertical-align: middle;
+  }
+  tbody td:first-child { color: var(--text); font-weight: 500; }
+
+  .outcome-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .outcome-badge.approved { background: rgba(34,197,94,0.1); color: #4ade80; }
+  .outcome-badge.denied { background: rgba(239,68,68,0.1); color: #f87171; }
+  .outcome-badge.review { background: rgba(245,158,11,0.1); color: #fbbf24; }
+
+  .status-dot {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted2);
+  }
+  .status-dot::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .status-dot.appeal::before { background: var(--warning); }
+  .status-dot.complete::before { background: var(--success); }
+
+  /* ANIMATIONS */
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo">
-            <span class="icon">✨</span>
-            <h1>FairLend</h1>
+
+<nav>
+  <div class="logo">
+    <div class="logo-mark">⚖</div>
+    FairLend
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="btn-apply">Apply for Loan</button>
+    <button class="nav-tab" id="btn-dashboard">Admin Dashboard</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- APPLICATION VIEW -->
+  <section id="view-apply" class="view active">
+    <div class="page-header">
+      <h2>Equitable Loan Application</h2>
+      <p>Evaluated on financial behavior only. <span class="badge-pill">No bias</span></p>
+    </div>
+
+    <div class="panel">
+      <p class="form-section-label">Financial Details</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="income">Annual Income ($)</label>
+          <input type="number" id="income" placeholder="e.g. 65000" min="0">
         </div>
-        <div class="nav-links">
-            <button id="btn-apply" class="active">Apply for Loan</button>
-            <button id="btn-dashboard">Admin Dashboard</button>
+        <div class="form-group">
+          <label for="amount">Loan Amount Requested ($)</label>
+          <input type="number" id="amount" placeholder="e.g. 15000" min="0">
         </div>
-    </nav>
+        <div class="form-group">
+          <label for="dti">Debt-to-Income Ratio (%)</label>
+          <input type="number" id="dti" placeholder="e.g. 25" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <!-- placeholder for grid alignment -->
+        </div>
+      </div>
 
-    <main class="container">
-        <!-- Application View -->
-        <section id="view-apply" class="view active">
-            <div class="header-text">
-                <h2>Equitable Loan Application</h2>
-                <p>Our AI evaluates your application solely on financial behavior. No demographic data required.</p>
+      <hr class="divider">
+      <p class="form-section-label">Credit History</p>
+
+      <label class="toggle-row" id="toggle-row" for="alt-data-toggle">
+        <input type="checkbox" id="alt-data-toggle">
+        <span class="toggle-switch"></span>
+        <span class="toggle-label"><strong>Limited credit history?</strong> Use alternative data</span>
+      </label>
+
+      <div id="traditional-credit" class="form-grid" style="margin-top: 1rem;">
+        <div class="form-group">
+          <label for="credit">Credit Score</label>
+          <input type="number" id="credit" placeholder="e.g. 720" min="300" max="850">
+        </div>
+      </div>
+
+      <div id="alt-fields" class="alt-fields">
+        <div class="form-group">
+          <label for="rent-history">On-time Rent Payments (months)</label>
+          <input type="number" id="rent-history" placeholder="e.g. 24" min="0">
+        </div>
+        <div class="form-group">
+          <label for="utility-history">On-time Utility Payments (months)</label>
+          <input type="number" id="utility-history" placeholder="e.g. 36" min="0">
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-submit">Analyze Application →</button>
+    </div>
+
+    <!-- RESULT -->
+    <div class="panel hidden" id="result-panel">
+      <div class="spinner-wrap" id="processing">
+        <div class="spinner"></div>
+        <p>AI is analyzing financial behavior…</p>
+      </div>
+
+      <div class="hidden fade-in" id="result-content">
+        <div class="result-header">
+          <div>
+            <div class="decision-badge" id="decision-badge">
+              <span class="decision-icon" id="decision-icon">✓</span>
+              <span id="decision-title">Loan Approved</span>
             </div>
-            
-            <form id="loan-form" class="glass-panel">
-                <div class="form-group">
-                    <label for="income">Annual Income ($)</label>
-                    <input type="number" id="income" required placeholder="e.g. 65000">
-                </div>
-                <div class="form-group">
-                    <label for="amount">Requested Loan Amount ($)</label>
-                    <input type="number" id="amount" required placeholder="e.g. 15000">
-                </div>
-                <div class="form-group">
-                    <label for="dti">Debt-to-Income Ratio (%)</label>
-                    <input type="number" id="dti" required placeholder="e.g. 25">
-                </div>
-                
-                <!-- NEW: Alternative Data Feature -->
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="alt-data-toggle">
-                    <label for="alt-data-toggle">I have a limited credit history (Use Alternative Data)</label>
-                </div>
+          </div>
+          <div class="fairness-ring">
+            <div class="score" id="fairness-score">98.5%</div>
+            <div class="score-label">Fairness Confidence</div>
+          </div>
+        </div>
 
-                <div id="traditional-credit" class="form-group">
-                    <label for="credit">Credit Score</label>
-                    <input type="number" id="credit" required placeholder="e.g. 720" min="300" max="850">
-                </div>
+        <div class="xai-section">
+          <h4>Decision Explainability (XAI)</h4>
+          <p class="xai-reason" id="xai-text">Decision driven by strong credit score and low DTI. Demographic factors were excluded from this analysis.</p>
 
-                <div id="alternative-credit" class="hidden">
-                    <div class="form-group">
-                        <label for="rent-history">Consecutive On-time Rent Payments (Months)</label>
-                        <input type="number" id="rent-history" placeholder="e.g. 24" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="utility-history">Consecutive On-time Utility Payments (Months)</label>
-                        <input type="number" id="utility-history" placeholder="e.g. 36" min="0">
-                    </div>
-                </div>
+          <div class="chart-wrap">
+            <canvas id="xai-chart"></canvas>
+          </div>
 
-                <button type="submit" class="primary-btn">Analyze Application</button>
-            </form>
+          <div id="xai-bars"></div>
+        </div>
 
-            <div id="result-panel" class="glass-panel hidden">
-                <div class="processing hidden" id="processing">
-                    <div class="spinner"></div>
-                    <p>AI is analyzing financial behavior...</p>
-                </div>
-                <div class="result-content hidden" id="result-content">
-                    <h3 id="decision-title">Loan Approved</h3>
-                    <div class="metrics">
-                        <div class="metric-box">
-                            <span class="metric-label">Fairness Confidence</span>
-                            <span class="metric-value highlight" id="fairness-score">98.5%</span>
-                        </div>
-                    </div>
-                    <div class="xai-box">
-                        <h4>AI Decision Explainability (XAI)</h4>
-                        <p id="xai-text">Decision driven by strong credit score and low DTI. Demographic factors were excluded from this analysis.</p>
-                        
-                        <!-- NEW CHART CONTAINER -->
-                        <div class="chart-container" style="position: relative; height:250px; width:100%; margin: 1.5rem 0;">
-                            <canvas id="xai-chart"></canvas>
-                        </div>
-                        
-                        <div class="xai-bars" id="xai-bars">
-                            <!-- Injected by JS -->
-                        </div>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="secondary-btn" id="btn-new-app">New Application</button>
-                        <!-- NEW: Human in the loop Appeal button -->
-                        <button class="appeal-btn hidden" id="btn-appeal">Request Human Review</button>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <div class="action-row">
+          <button class="btn-secondary" id="btn-new-app">New Application</button>
+          <button class="btn-appeal hidden" id="btn-appeal">Request Human Review</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <!-- Dashboard View -->
-        <section id="view-dashboard" class="view hidden">
-            <div class="header-text">
-                <h2>Bias Detection Dashboard</h2>
-                <p>Real-time monitoring of model fairness and AI decision-making.</p>
-            </div>
+  <!-- DASHBOARD VIEW -->
+  <section id="view-dashboard" class="view hidden">
+    <div class="page-header">
+      <h2>Bias Detection Dashboard</h2>
+      <p>Real-time fairness monitoring and AI decision tracking.</p>
+    </div>
 
-            <div class="dashboard-grid">
-                <div class="glass-panel stat-card">
-                    <h3>Demographic Parity</h3>
-                    <div class="stat-value text-green" id="dash-parity">0.98</div>
-                    <p class="stat-desc">Target: > 0.80</p>
-                </div>
-                <div class="glass-panel stat-card">
-                    <h3>Equal Opportunity</h3>
-                    <div class="stat-value text-green" id="dash-opportunity">0.95</div>
-                    <p class="stat-desc">Target: > 0.80</p>
-                </div>
-                <div class="glass-panel stat-card">
-                    <h3>Pending Appeals (HITL)</h3>
-                    <div class="stat-value" id="dash-appeals">2</div>
-                    <p class="stat-desc">Requires human review</p>
-                </div>
-            </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <h3>Demographic Parity</h3>
+        <div class="stat-val text-green" id="dash-parity">0.98</div>
+        <p>Target: &gt; 0.80</p>
+      </div>
+      <div class="stat-card">
+        <h3>Equal Opportunity</h3>
+        <div class="stat-val text-green" id="dash-opportunity">0.95</div>
+        <p>Target: &gt; 0.80</p>
+      </div>
+      <div class="stat-card">
+        <h3>Pending Appeals</h3>
+        <div class="stat-val text-yellow" id="dash-appeals">2</div>
+        <p>Requires human review</p>
+      </div>
+    </div>
 
-            <div class="glass-panel table-container">
-                <div class="table-header">
-                    <h3>Recent AI Decisions</h3>
-                    <div class="table-filters">
-                        <span class="badge" style="background: rgba(255,255,255,0.1)">All</span>
-                        <span class="badge appeal">Appeals</span>
-                    </div>
-                </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>App ID</th>
-                            <th>Outcome</th>
-                            <th>Fairness Score</th>
-                            <th>Primary Factor</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dashboard-table-body">
-                        <!-- Mock data injected by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
-    <script src="app.js"></script>
+    <div class="table-panel">
+      <div class="table-head">
+        <h3>Recent AI Decisions</h3>
+        <div class="filter-badges">
+          <span class="fbadge active">All</span>
+          <span class="fbadge">Appeals</span>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>App ID</th>
+            <th>Outcome</th>
+            <th>Fairness Score</th>
+            <th>Primary Factor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ─── NAV ───────────────────────────────────────────────────────────────────
+  const btnApply = document.getElementById('btn-apply');
+  const btnDash  = document.getElementById('btn-dashboard');
+  const viewApply = document.getElementById('view-apply');
+  const viewDash  = document.getElementById('view-dashboard');
+
+  btnApply.addEventListener('click', () => {
+    btnApply.classList.add('active'); btnDash.classList.remove('active');
+    viewApply.classList.add('active'); viewDash.classList.remove('active');
+    viewApply.classList.remove('hidden'); viewDash.classList.add('hidden');
+  });
+  btnDash.addEventListener('click', () => {
+    btnDash.classList.add('active'); btnApply.classList.remove('active');
+    viewDash.classList.add('active'); viewApply.classList.remove('active');
+    viewDash.classList.remove('hidden'); viewApply.classList.add('hidden');
+    populateDashboard();
+  });
+
+  // ─── TOGGLE ─────────────────────────────────────────────────────────────────
+  const toggle = document.getElementById('alt-data-toggle');
+  const toggleRow = document.getElementById('toggle-row');
+  const tradCredit = document.getElementById('traditional-credit');
+  const altFields  = document.getElementById('alt-fields');
+
+  toggle.addEventListener('change', () => {
+    const on = toggle.checked;
+    toggleRow.classList.toggle('checked', on);
+    tradCredit.style.display = on ? 'none' : '';
+    altFields.classList.toggle('visible', on);
+  });
+
+  // ─── FORM SUBMIT ────────────────────────────────────────────────────────────
+  let xaiChartInstance = null;
+
+  document.getElementById('btn-submit').addEventListener('click', () => {
+    const income = parseFloat(document.getElementById('income').value);
+    const amount = parseFloat(document.getElementById('amount').value);
+    const dti    = parseFloat(document.getElementById('dti').value);
+    const useAlt = toggle.checked;
+    const credit = useAlt ? null : parseFloat(document.getElementById('credit').value);
+    const rent   = useAlt ? parseFloat(document.getElementById('rent-history').value || 0) : 0;
+    const util   = useAlt ? parseFloat(document.getElementById('utility-history').value || 0) : 0;
+
+    if (!income || !amount || !dti || (!useAlt && !credit)) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    const resultPanel = document.getElementById('result-panel');
+    const processing  = document.getElementById('processing');
+    const resultContent = document.getElementById('result-content');
+
+    resultPanel.classList.remove('hidden');
+    processing.classList.remove('hidden');
+    resultContent.classList.add('hidden');
+    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    setTimeout(() => {
+      const result = analyzeApplication({ income, amount, dti, credit, rent, util, useAlt });
+      renderResult(result);
+      processing.classList.add('hidden');
+      resultContent.classList.remove('hidden');
+    }, 1800);
+  });
+
+  function analyzeApplication({ income, amount, dti, credit, rent, util, useAlt }) {
+    const loanToIncome = amount / income;
+    let score = 0;
+    let factors = [];
+
+    // DTI factor
+    const dtiScore = Math.max(0, 100 - dti * 2);
+    score += dtiScore * 0.35;
+    factors.push({ name: 'Debt-to-Income Ratio', value: dtiScore, weight: 35 });
+
+    // Loan-to-income factor
+    const ltiScore = Math.max(0, 100 - loanToIncome * 50);
+    score += ltiScore * 0.2;
+    factors.push({ name: 'Loan-to-Income Ratio', value: ltiScore, weight: 20 });
+
+    if (!useAlt) {
+      const creditScore = ((credit - 300) / 550) * 100;
+      score += creditScore * 0.45;
+      factors.push({ name: 'Credit Score', value: creditScore, weight: 45 });
+    } else {
+      const rentScore = Math.min(100, (rent / 36) * 100);
+      const utilScore = Math.min(100, (util / 36) * 100);
+      const altScore  = (rentScore + utilScore) / 2;
+      score += altScore * 0.45;
+      factors.push({ name: 'Rent Payment History',    value: rentScore, weight: 22 });
+      factors.push({ name: 'Utility Payment History', value: utilScore, weight: 23 });
+    }
+
+    const approved = score >= 60;
+    const fairness = (92 + Math.random() * 7).toFixed(1);
+
+    let reason = '';
+    if (approved) {
+      reason = useAlt
+        ? 'Application approved using alternative credit data. Strong rent and utility payment history demonstrate financial reliability. Demographic factors were excluded entirely.'
+        : 'Decision driven by strong credit profile and manageable DTI. No demographic factors were considered in this analysis.';
+    } else {
+      reason = dti > 45
+        ? 'High debt-to-income ratio is the primary concern. Consider reducing existing debt before reapplying.'
+        : !useAlt && credit < 600
+          ? 'Credit score falls below the minimum threshold. Building credit history may improve eligibility.'
+          : 'Loan amount relative to income exceeds acceptable thresholds. A smaller loan amount may be approved.';
+    }
+
+    return { approved, score, fairness, factors, reason };
+  }
+
+  function renderResult({ approved, score, fairness, factors, reason }) {
+    const badge = document.getElementById('decision-badge');
+    const icon  = document.getElementById('decision-icon');
+    const title = document.getElementById('decision-title');
+    const fscore = document.getElementById('fairness-score');
+    const xaiText = document.getElementById('xai-text');
+    const appeal  = document.getElementById('btn-appeal');
+
+    badge.className = 'decision-badge ' + (approved ? 'approved' : 'denied');
+    icon.textContent  = approved ? '✓' : '✕';
+    title.textContent = approved ? 'Loan Approved' : 'Application Declined';
+    fscore.textContent = fairness + '%';
+    xaiText.textContent = reason;
+    appeal.classList.toggle('hidden', approved);
+
+    // Factor bars
+    const barsEl = document.getElementById('xai-bars');
+    barsEl.innerHTML = '';
+    const colors = ['#4f8ef7','#7c5cfc','#22c55e','#f59e0b'];
+    factors.forEach((f, i) => {
+      const pct = Math.round(f.value);
+      const div = document.createElement('div');
+      div.className = 'factor-bar';
+      div.innerHTML = `
+        <div class="factor-row">
+          <span class="factor-name">${f.name}</span>
+          <span class="factor-val">${pct}%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:0%; background:${colors[i % colors.length]}" data-target="${pct}%"></div>
+        </div>`;
+      barsEl.appendChild(div);
+    });
+
+    // Animate bars
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.bar-fill').forEach(el => {
+        el.style.width = el.dataset.target;
+      });
+    });
+
+    // Chart
+    if (xaiChartInstance) { xaiChartInstance.destroy(); }
+    const ctx = document.getElementById('xai-chart').getContext('2d');
+    xaiChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: factors.map(f => f.name),
+        datasets: [{
+          data: factors.map(f => f.weight),
+          backgroundColor: colors.slice(0, factors.length),
+          borderWidth: 0,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: '#9ca3af',
+              font: { size: 11, family: "'DM Sans', sans-serif" },
+              boxWidth: 10,
+              padding: 12
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.parsed}% weight`
+            }
+          }
+        }
+      }
+    });
+  }
+
+  document.getElementById('btn-new-app').addEventListener('click', () => {
+    document.getElementById('result-panel').classList.add('hidden');
+    document.getElementById('income').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('dti').value = '';
+    document.getElementById('credit').value = '';
+    document.getElementById('rent-history').value = '';
+    document.getElementById('utility-history').value = '';
+  });
+
+  document.getElementById('btn-appeal').addEventListener('click', () => {
+    alert('Your request for human review has been submitted. A loan officer will contact you within 2 business days.');
+    document.getElementById('dash-appeals').textContent =
+      parseInt(document.getElementById('dash-appeals').textContent) + 1;
+  });
+
+  // ─── DASHBOARD ───────────────────────────────────────────────────────────────
+  const mockDecisions = [
+    { id: 'FL-2041', outcome: 'approved', score: '97.2%', factor: 'Credit Score', status: 'complete' },
+    { id: 'FL-2040', outcome: 'denied',   score: '94.8%', factor: 'High DTI',     status: 'appeal'   },
+    { id: 'FL-2039', outcome: 'approved', score: '99.1%', factor: 'Alt. Data',    status: 'complete' },
+    { id: 'FL-2038', outcome: 'denied',   score: '96.3%', factor: 'Loan Amount',  status: 'appeal'   },
+    { id: 'FL-2037', outcome: 'approved', score: '98.7%', factor: 'Credit Score', status: 'complete' },
+    { id: 'FL-2036', outcome: 'approved', score: '95.5%', factor: 'Income Ratio', status: 'complete' },
+  ];
+
+  function populateDashboard() {
+    const tbody = document.getElementById('dashboard-table-body');
+    tbody.innerHTML = '';
+    mockDecisions.forEach(d => {
+      const outcomeLabel = d.outcome === 'approved' ? 'Approved' : 'Declined';
+      const statusLabel  = d.status === 'appeal' ? 'Pending Review' : 'Complete';
+      tbody.innerHTML += `
+        <tr>
+          <td>${d.id}</td>
+          <td><span class="outcome-badge ${d.outcome}">${outcomeLabel}</span></td>
+          <td>${d.score}</td>
+          <td>${d.factor}</td>
+          <td><span class="status-dot ${d.status}">${statusLabel}</span></td>
+        </tr>`;
+    });
+  }
+
+  // Filter badges (visual only)
+  document.querySelectorAll('.fbadge').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.fbadge').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+</script>
 </body>
 </html>
